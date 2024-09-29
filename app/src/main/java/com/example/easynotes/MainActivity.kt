@@ -10,6 +10,9 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.easynotes.navigation.AppNavigation
+import com.example.easynotes.screens.SignInScreen
+import com.example.easynotes.screens.SignUpScreen
 import com.example.easynotes.ui.theme.EasyNotesTheme
 
 class MainActivity : ComponentActivity() {
@@ -17,7 +20,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             EasyNotesTheme {
-
+                AppNavigation()
             }
         }
     }
