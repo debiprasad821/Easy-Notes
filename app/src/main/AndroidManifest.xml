@@ -4,6 +4,7 @@
     package="com.example.easynotes">
 
     <application
+        android:name=".di.BaseApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"

@@ -1,5 +1,6 @@
 package com.example.easynotes.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -24,12 +26,19 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.example.easynotes.AuthState
+import com.example.easynotes.AuthViewModel
 import com.example.easynotes.R
 import com.example.easynotes.ui.theme.ButtonColor
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun SignInScreen(navController: NavHostController) {
+fun SignInScreen(
+    navController: NavHostController,
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
     var email by remember {
         mutableStateOf("")
     }
@@ -38,6 +47,40 @@ fun SignInScreen(navController: NavHostController) {
     }
     var showPassword by remember {
         mutableStateOf(false)
+    }
+    val authState by authViewModel.authState.collectAsState()
+    val isLoading = authState is AuthState.Loading
+    val context = LocalContext.current
+
+    LaunchedEffect(key1 = authState) {
+        when (authState) {
+            is AuthState.Authenticated -> {
+                val currentUser = FirebaseAuth.getInstance().currentUser
+                if (currentUser != null && !currentUser.isEmailVerified) {
+                    Toast.makeText(
+                        context,
+                        "Please verify email before sign in.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    navController.navigate("home") {
+                        popUpTo("signIn") {
+                            inclusive = true
+                        }
+                    }
+                }
+            }
+
+            is AuthState.Error -> {
+                Toast.makeText(
+                    context,
+                    (authState as AuthState.Error).error,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            else -> {}
+        }
     }
 
     Column(
@@ -137,13 +180,23 @@ fun SignInScreen(navController: NavHostController) {
                 backgroundColor = ButtonColor,
                 contentColor = Color.White
             ),
-            onClick = { /*TODO*/ }
+            onClick = {
+                authViewModel.signIn(email, password)
+            }
         ) {
-            Text(
-                text = "SIGN IN",
-                fontSize = 16.sp,
-                fontFamily = FontFamily(Font(R.font.poppins_semi_bold))
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(32.dp),
+                    color = Color.White,
+                    strokeWidth = 3.dp
+                )
+            } else {
+                Text(
+                    text = "SIGN IN",
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily(Font(R.font.poppins_semi_bold))
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(10.dp))

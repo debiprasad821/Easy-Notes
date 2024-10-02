@@ -3,6 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
     id 'dagger.hilt.android.plugin'
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -77,4 +78,13 @@ dependencies {
 
     // Runtime live data
     implementation "androidx.compose.runtime:runtime-livedata:1.2.1"
+
+    // BOM for the Firebase platform
+    implementation platform('com.google.firebase:firebase-bom:31.0.0')
+
+    // Firebase Authentication
+    implementation 'com.google.firebase:firebase-auth-ktx'
+
+    // Preferences Datastore
+    implementation 'androidx.datastore:datastore-preferences:1.0.0'
 }

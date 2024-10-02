@@ -1,5 +1,6 @@
 package com.example.easynotes.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -15,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
@@ -27,12 +29,18 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.example.easynotes.AuthState
+import com.example.easynotes.AuthViewModel
 import com.example.easynotes.R
 import com.example.easynotes.ui.theme.ButtonColor
 
 @Composable
-fun SignUpScreen(navController: NavHostController) {
+fun SignUpScreen(
+    navController: NavHostController,
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
     var name by remember {
         mutableStateOf("")
     }
@@ -43,8 +51,36 @@ fun SignUpScreen(navController: NavHostController) {
         mutableStateOf("")
     }
     val localFocusManager = LocalFocusManager.current
+    val context = LocalContext.current
     var showPassword by remember {
         mutableStateOf(false)
+    }
+    val authState by authViewModel.authState.collectAsState()
+    val isLoading = authState is AuthState.Loading
+
+    LaunchedEffect(key1 = authState) {
+        when (authState) {
+            is AuthState.Error -> {
+                Toast.makeText(
+                    context,
+                    (authState as AuthState.Error).error,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            is AuthState.Success -> {
+                Toast.makeText(
+                    context,
+                    (authState as AuthState.Success).message,
+                    Toast.LENGTH_SHORT
+                ).show()
+                navController.navigate("signIn") {
+                    popUpTo("signUp") {
+                        inclusive = true
+                    }
+                }
+            }
+            else -> {}
+        }
     }
 
     Column(
@@ -172,13 +208,23 @@ fun SignUpScreen(navController: NavHostController) {
                 backgroundColor = ButtonColor,
                 contentColor = Color.White
             ),
-            onClick = { /*TODO*/ }
+            onClick = {
+                authViewModel.signUp(name, email, password)
+            }
         ) {
-            Text(
-                text = "SIGN UP",
-                fontSize = 16.sp,
-                fontFamily = FontFamily(Font(R.font.poppins_semi_bold))
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(32.dp),
+                    color = Color.White,
+                    strokeWidth = 3.dp
+                )
+            } else {
+                Text(
+                    text = "SIGN UP",
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily(Font(R.font.poppins_semi_bold))
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
