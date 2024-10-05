@@ -63,6 +63,7 @@ fun SignInScreen(
                         Toast.LENGTH_SHORT
                     ).show()
                 } else {
+                    authViewModel.saveIsLoggedIn(true)
                     navController.navigate("home") {
                         popUpTo("signIn") {
                             inclusive = true
