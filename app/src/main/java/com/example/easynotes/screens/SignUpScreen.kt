@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.example.easynotes.AuthState
-import com.example.easynotes.AuthViewModel
+import com.example.easynotes.viewmodel.AuthViewModel
 import com.example.easynotes.R
 import com.example.easynotes.ui.theme.ButtonColor
 

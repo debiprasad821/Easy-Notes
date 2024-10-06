@@ -2,7 +2,6 @@ package com.example.easynotes.repository
 
 import com.example.easynotes.AuthState
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.UserProfileChangeRequest
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -28,8 +27,17 @@ class AuthRepositoryImpl @Inject constructor(private val auth: FirebaseAuth) : A
         return try {
             auth.signInWithEmailAndPassword(email, password).await()
             AuthState.Authenticated
-        } catch (e:Exception) {
+        } catch (e: Exception) {
             AuthState.Error("Invalid login credential.")
+        }
+    }
+
+    override suspend fun signOut(): AuthState {
+        return try {
+            auth.signOut()
+            AuthState.Success("Logout success")
+        } catch (e: Exception) {
+            AuthState.Error(e.message ?: "Logout failed")
         }
     }
 }

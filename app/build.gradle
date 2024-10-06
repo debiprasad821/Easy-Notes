@@ -85,6 +85,9 @@ dependencies {
     // Firebase Authentication
     implementation 'com.google.firebase:firebase-auth-ktx'
 
+    // Firebase firestore
+    implementation 'com.google.firebase:firebase-firestore'
+
     // Preferences Datastore
     implementation 'androidx.datastore:datastore-preferences:1.0.0'
 }

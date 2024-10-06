@@ -1,7 +1,8 @@
-package com.example.easynotes
+package com.example.easynotes.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.easynotes.AuthState
 import com.example.easynotes.data.DataStoreManager
 import com.example.easynotes.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,6 +33,14 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             val result = authRepository.signIn(email, password)
+            _authState.value = result
+        }
+    }
+
+    fun signOut() {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            val result = authRepository.signOut()
             _authState.value = result
         }
     }

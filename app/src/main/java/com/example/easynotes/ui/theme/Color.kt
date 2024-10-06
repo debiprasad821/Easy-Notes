@@ -8,3 +8,4 @@ val Purple700 = Color(0xFF3700B3)
 val Teal200 = Color(0xFF03DAC5)
 val Teal500 = Color(0xFF01B8FE)
 val ButtonColor = Color(0xFF0377F0) // ADCED7, 0377F0
+val LightGray = Color(0xFFD6D0D0)
