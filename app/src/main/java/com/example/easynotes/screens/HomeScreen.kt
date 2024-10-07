@@ -36,6 +36,7 @@ import com.example.easynotes.AuthState
 import com.example.easynotes.R
 import com.example.easynotes.Result
 import com.example.easynotes.data.model.Note
+import com.example.easynotes.screens.dialog.LogoutDialog
 import com.example.easynotes.ui.theme.ButtonColor
 import com.example.easynotes.ui.theme.LightGray
 import com.example.easynotes.util.Utility
@@ -56,6 +57,7 @@ fun HomeScreen(
     val notesState by noteViewModel.notes.collectAsState()
     val authState by authViewModel.authState.collectAsState()
     val context = LocalContext.current
+    var showLogoutDialog by remember { mutableStateOf(false) }
     var query by remember {
         mutableStateOf("")
     }
@@ -129,13 +131,8 @@ fun HomeScreen(
             topBar = {
                 TopBar(
                     name = displayName,
-                    menuDropdownExpanded = menuDropdownExpanded,
-                    authViewModel = authViewModel,
-                    onClickMenu = {
-                        menuDropdownExpanded = true
-                    },
-                    onDismiss = {
-                        menuDropdownExpanded = false
+                    onClickLogout = {
+                        showLogoutDialog = true
                     }
                 )
             },
@@ -200,6 +197,18 @@ fun HomeScreen(
                         }
                     }
                 }
+            }
+
+            if (showLogoutDialog) {
+                LogoutDialog(
+                    onClickLogout = {
+                        authViewModel.signOut()
+                        showLogoutDialog = false
+                    },
+                    onClickCancel = {
+                        showLogoutDialog = false
+                    }
+                )
             }
         }
     }
@@ -316,7 +325,7 @@ fun SearchBar(query: String, onValueChange: (String) -> Unit) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_search),
                 contentDescription = null,
-                modifier = Modifier.size(30.dp)
+                modifier = Modifier.size(25.dp)
             )
         },
         textStyle = TextStyle(
@@ -331,7 +340,7 @@ fun SearchBar(query: String, onValueChange: (String) -> Unit) {
             focusedBorderColor = Color.Transparent,
             backgroundColor = LightGray
         ),
-        shape = RoundedCornerShape(7.dp),
+        shape = RoundedCornerShape(35.dp),
         singleLine = true,
         maxLines = 1
     )
@@ -357,10 +366,7 @@ fun FloatingButton(onClick: () -> Unit) {
 @Composable
 fun TopBar(
     name: String,
-    menuDropdownExpanded: Boolean,
-    authViewModel: AuthViewModel,
-    onClickMenu: () -> Unit,
-    onDismiss: () -> Unit
+    onClickLogout: () -> Unit
 ) {
     TopAppBar(
         title = {
@@ -377,16 +383,17 @@ fun TopBar(
             Box {
                 IconButton(
                     onClick = {
-                        onClickMenu.invoke()
+                        onClickLogout.invoke()
                     }
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Menu,
+                        modifier = Modifier.size(18.dp),
+                        painter = painterResource(id = R.drawable.ic_logout),
                         contentDescription = null
                     )
                 }
 
-                DropdownMenu(
+                /*DropdownMenu(
                     expanded = menuDropdownExpanded,
                     onDismissRequest = {
                         onDismiss.invoke()
@@ -398,7 +405,7 @@ fun TopBar(
                     }) {
                         Text(text = "Logout")
                     }
-                }
+                }*/
             }
         }
     )
