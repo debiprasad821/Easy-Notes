@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AddNoteScreen(
     navController: NavHostController,
+    note: Note?,
     noteViewModel: NoteViewModel = hiltViewModel()
 ) {
     var title by remember {
@@ -41,9 +42,15 @@ fun AddNoteScreen(
         mutableStateOf("")
     }
     val noteState by noteViewModel.addNoteState.collectAsState()
+    val updateNoteState by noteViewModel.updateNoteState.collectAsState()
     val context = LocalContext.current
     var showLoader by remember {
         mutableStateOf(false)
+    }
+
+    LaunchedEffect(key1 = note) {
+        title = note?.title?:""
+        description = note?.description?:""
     }
 
     LaunchedEffect(key1 = noteState) {
@@ -70,15 +77,49 @@ fun AddNoteScreen(
         }
     }
 
+    LaunchedEffect(key1 = updateNoteState) {
+        when (updateNoteState) {
+            is Result.Loading -> {
+                showLoader = true
+            }
+            is Result.Success -> {
+                Toast.makeText(
+                    context,
+                    (updateNoteState as Result.Success).data,
+                    Toast.LENGTH_SHORT
+                ).show()
+                navController.popBackStack()
+            }
+            is Result.Error -> {
+                Toast.makeText(
+                    context,
+                    (updateNoteState as Result.Error).error,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            else -> {}
+        }
+    }
+
     Scaffold(
         topBar = {
             TopBar {
-                val note = Note(
-                    title = title,
-                    description = description,
-                    timeStamp = Timestamp.now()
-                )
-                noteViewModel.addNote(note)
+                if (note == null) {
+                    val noteItem = Note(
+                        title = title,
+                        description = description,
+                        timeStamp = Timestamp.now()
+                    )
+                    noteViewModel.addNote(noteItem)
+                } else {
+                    val noteItem = Note(
+                        id = note.id,
+                        title = title,
+                        description = description,
+                        timeStamp = Timestamp.now()
+                    )
+                    noteViewModel.updateNote(noteItem)
+                }
             }
         }
     ) {
@@ -170,5 +211,5 @@ fun TopBar(onClickAdd: () -> Unit) {
 @Composable
 @Preview(device = Devices.PIXEL)
 fun AddNoteScreenPreview() {
-    AddNoteScreen(navController = rememberNavController())
+//    AddNoteScreen(navController = rememberNavController())
 }

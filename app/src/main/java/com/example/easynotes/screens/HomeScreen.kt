@@ -4,7 +4,6 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -42,17 +41,18 @@ import com.example.easynotes.ui.theme.LightGray
 import com.example.easynotes.util.Utility
 import com.example.easynotes.viewmodel.AuthViewModel
 import com.example.easynotes.viewmodel.NoteViewModel
+import com.google.firebase.auth.FirebaseAuth
+import com.google.gson.Gson
 
 @RequiresApi(Build.VERSION_CODES.N)
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
     noteViewModel: NoteViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
-//    val firebaseAuth = FirebaseAuth.getInstance()
-//    val displayName = firebaseAuth.currentUser?.displayName ?: "Guest"
+    val firebaseAuth = FirebaseAuth.getInstance()
+    val displayName = firebaseAuth.currentUser?.displayName ?: "Guest"
     val notesState by noteViewModel.notes.collectAsState()
     val authState by authViewModel.authState.collectAsState()
     val context = LocalContext.current
@@ -66,6 +66,9 @@ fun HomeScreen(
         mutableStateOf(false)
     }
     var menuDropdownExpanded by remember {
+        mutableStateOf(false)
+    }
+    var showMoreDropdown by remember {
         mutableStateOf(false)
     }
 
@@ -113,6 +116,11 @@ fun HomeScreen(
         }
     }
 
+    val filteredNotes = notes.filter { note ->
+        note?.title?.contains(query, true) == true ||
+                note?.description?.contains(query, true) == true
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -120,7 +128,7 @@ fun HomeScreen(
             modifier = Modifier.fillMaxSize(),
             topBar = {
                 TopBar(
-                    name = "Debiprasad",
+                    name = displayName,
                     menuDropdownExpanded = menuDropdownExpanded,
                     authViewModel = authViewModel,
                     onClickMenu = {
@@ -159,10 +167,24 @@ fun HomeScreen(
                         CircularProgressIndicator()
                     }
                 } else {
-                    if (notes.isNotEmpty()) {
-                        LazyColumn(contentPadding = PaddingValues(4.dp)) {
-                            items(notes) { note ->
-                                NoteItem(note)
+                    if (filteredNotes.isNotEmpty()) {
+                        LazyColumn(
+                            contentPadding = PaddingValues(vertical = 10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            items(filteredNotes) { note ->
+                                NoteItem(
+                                    note = note,
+                                    onClickUpdate = { note ->
+                                        val noteJson = Gson().toJson(note)
+                                        navController.navigate(
+                                            "add_note?note=$noteJson"
+                                        )
+                                    },
+                                    onClickDelete = {
+                                        noteViewModel.deleteNote(it)
+                                    }
+                                )
                             }
                         }
                     } else {
@@ -185,11 +207,17 @@ fun HomeScreen(
 
 @RequiresApi(Build.VERSION_CODES.N)
 @Composable
-fun NoteItem(note: Note?) {
+fun NoteItem(
+    note: Note?,
+    onClickUpdate: (note: Note?) -> Unit,
+    onClickDelete: (noteId: String) -> Unit
+) {
+    var showMoreDropdown by remember {
+        mutableStateOf(false)
+    }
     Card(
         elevation = 2.dp,
         shape = RoundedCornerShape(7.dp),
-        modifier = Modifier.padding(4.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -216,16 +244,43 @@ fun NoteItem(note: Note?) {
                     )
                 }
 
-                IconButton(
-                    onClick = { /*TODO*/ },
-                    modifier = Modifier
-                        .size(22.dp)
-                        .align(Alignment.Top)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = null
-                    )
+                Box {
+                    IconButton(
+                        onClick = {
+                            showMoreDropdown = true
+                        },
+                        modifier = Modifier
+                            .size(22.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = null
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = showMoreDropdown,
+                        onDismissRequest = {
+                            showMoreDropdown = false
+                        }
+                    ) {
+                        DropdownMenuItem(
+                            onClick = {
+                                onClickUpdate.invoke(note)
+                                showMoreDropdown = false
+                            }
+                        ) {
+                            Text(text = "Update")
+                        }
+                        DropdownMenuItem(
+                            onClick = {
+                                onClickDelete.invoke(note!!.id)
+                                showMoreDropdown = false
+                            }
+                        ) {
+                            Text(text = "Delete")
+                        }
+                    }
                 }
             }
 
@@ -244,7 +299,9 @@ fun NoteItem(note: Note?) {
 @Composable
 fun SearchBar(query: String, onValueChange: (String) -> Unit) {
     OutlinedTextField(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 7.dp),
         value = query,
         onValueChange = {
             onValueChange.invoke(it)
@@ -358,5 +415,5 @@ fun HomeScreenPreview() {
 @Composable
 @Preview
 fun NoteItemPreview() {
-    NoteItem(note = Note())
+//    NoteItem(note = Note())
 }

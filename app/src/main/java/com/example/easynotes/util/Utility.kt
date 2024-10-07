@@ -20,6 +20,6 @@ object Utility {
 
     @RequiresApi(Build.VERSION_CODES.N)
     fun timeStampToString(timestamp: Timestamp): String {
-        return SimpleDateFormat("dd/mm/YYYY").format(timestamp.toDate())
+        return SimpleDateFormat("dd/MM/yyyy").format(timestamp.toDate())
     }
 }
