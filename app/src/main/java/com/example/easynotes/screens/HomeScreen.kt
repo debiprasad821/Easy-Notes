@@ -4,6 +4,7 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,12 +13,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -45,6 +47,7 @@ import com.example.easynotes.viewmodel.NoteViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.Gson
 
+@OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.N)
 @Composable
 fun HomeScreen(
@@ -65,12 +68,6 @@ fun HomeScreen(
         mutableStateOf<List<Note?>>(emptyList())
     }
     var loading by remember {
-        mutableStateOf(false)
-    }
-    var menuDropdownExpanded by remember {
-        mutableStateOf(false)
-    }
-    var showMoreDropdown by remember {
         mutableStateOf(false)
     }
 
@@ -214,6 +211,7 @@ fun HomeScreen(
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.N)
 @Composable
 fun NoteItem(
@@ -221,86 +219,94 @@ fun NoteItem(
     onClickUpdate: (note: Note?) -> Unit,
     onClickDelete: (noteId: String) -> Unit
 ) {
-    var showMoreDropdown by remember {
-        mutableStateOf(false)
-    }
-    Card(
-        elevation = 2.dp,
-        shape = RoundedCornerShape(7.dp),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                ) {
-                    Text(
-                        text = note?.title ?: "-",
-                        fontSize = 16.sp,
-                        fontFamily = FontFamily(Font(R.font.poppins_semi_bold))
-                    )
-                    Text(
-                        text = note?.description ?: "-",
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily(Font(R.font.poppins_regular))
-                    )
+    val dismissState = rememberDismissState(
+        confirmStateChange = { dismissValue ->
+            when (dismissValue) {
+                DismissValue.DismissedToStart -> {
+                    onClickDelete.invoke(note!!.id)
+                    true
                 }
-
-                Box {
-                    IconButton(
-                        onClick = {
-                            showMoreDropdown = true
-                        },
-                        modifier = Modifier
-                            .size(22.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = null
-                        )
-                    }
-
-                    DropdownMenu(
-                        expanded = showMoreDropdown,
-                        onDismissRequest = {
-                            showMoreDropdown = false
-                        }
-                    ) {
-                        DropdownMenuItem(
-                            onClick = {
-                                onClickUpdate.invoke(note)
-                                showMoreDropdown = false
-                            }
-                        ) {
-                            Text(text = "Update")
-                        }
-                        DropdownMenuItem(
-                            onClick = {
-                                onClickDelete.invoke(note!!.id)
-                                showMoreDropdown = false
-                            }
-                        ) {
-                            Text(text = "Delete")
-                        }
-                    }
+                DismissValue.DismissedToEnd -> {
+                    onClickUpdate.invoke(note)
+                    true
+                }
+                else -> {
+                    false
                 }
             }
-
-            Text(
-                text = Utility.timeStampToString(note!!.timeStamp),
+        }
+    )
+    SwipeToDismiss(
+        state = dismissState,
+        background = {
+            val color =
+                if (dismissState.dismissDirection == DismissDirection.EndToStart) {
+                    Color.Red
+                } else if (dismissState.dismissDirection == DismissDirection.StartToEnd) {
+                    ButtonColor
+                } else {
+                    Color.Transparent
+                }
+            val icon: ImageVector? =
+                if (dismissState.dismissDirection == DismissDirection.EndToStart) {
+                    Icons.Default.Delete
+                } else if (dismissState.dismissDirection == DismissDirection.StartToEnd) {
+                    Icons.Default.Edit
+                } else {
+                    null
+                }
+            Box(
                 modifier = Modifier
-                    .padding(start = 8.dp, bottom = 5.dp, end = 8.dp)
-                    .align(Alignment.End),
-                fontFamily = FontFamily(Font(R.font.poppins_regular)),
-                fontSize = 11.sp
-            )
+                    .fillMaxSize()
+                    .background(color = color)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = if (dismissState.dismissDirection == DismissDirection.EndToStart) Alignment.CenterEnd else Alignment.CenterStart
+            ) {
+                icon?.let {
+                    Icon(imageVector = icon, contentDescription = null, tint = Color.White)
+                }
+            }
+        }
+    ) {
+        Card(
+            elevation = 2.dp,
+            shape = RoundedCornerShape(4.dp),
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
+                        Text(
+                            text = note?.title ?: "-",
+                            fontSize = 16.sp,
+                            fontFamily = FontFamily(Font(R.font.poppins_semi_bold))
+                        )
+                        Text(
+                            text = note?.description ?: "-",
+                            fontSize = 14.sp,
+                            fontFamily = FontFamily(Font(R.font.poppins_regular))
+                        )
+                    }
+                }
+
+                Text(
+                    text = Utility.timeStampToString(note!!.timeStamp),
+                    modifier = Modifier
+                        .padding(start = 8.dp, bottom = 5.dp, end = 8.dp)
+                        .align(Alignment.End),
+                    fontFamily = FontFamily(Font(R.font.poppins_regular)),
+                    fontSize = 11.sp
+                )
+            }
         }
     }
 }
@@ -392,20 +398,6 @@ fun TopBar(
                         contentDescription = null
                     )
                 }
-
-                /*DropdownMenu(
-                    expanded = menuDropdownExpanded,
-                    onDismissRequest = {
-                        onDismiss.invoke()
-                    }
-                ) {
-                    DropdownMenuItem(onClick = {
-                        authViewModel.signOut()
-                        onDismiss.invoke()
-                    }) {
-                        Text(text = "Logout")
-                    }
-                }*/
             }
         }
     )

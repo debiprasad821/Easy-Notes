@@ -1,9 +1,12 @@
 package com.example.easynotes.screens
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,13 +24,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.example.easynotes.R
 import com.example.easynotes.Result
 import com.example.easynotes.data.model.Note
 import com.example.easynotes.viewmodel.NoteViewModel
 import com.google.firebase.Timestamp
-import kotlinx.coroutines.launch
 
 @Composable
 fun AddNoteScreen(
@@ -49,8 +50,8 @@ fun AddNoteScreen(
     }
 
     LaunchedEffect(key1 = note) {
-        title = note?.title?:""
-        description = note?.description?:""
+        title = note?.title ?: ""
+        description = note?.description ?: ""
     }
 
     LaunchedEffect(key1 = noteState) {
@@ -103,22 +104,24 @@ fun AddNoteScreen(
 
     Scaffold(
         topBar = {
-            TopBar {
-                if (note == null) {
-                    val noteItem = Note(
-                        title = title,
-                        description = description,
-                        timeStamp = Timestamp.now()
-                    )
-                    noteViewModel.addNote(noteItem)
-                } else {
-                    val noteItem = Note(
-                        id = note.id,
-                        title = title,
-                        description = description,
-                        timeStamp = Timestamp.now()
-                    )
-                    noteViewModel.updateNote(noteItem)
+            TopBar(note, navController = navController) {
+                if (validate(title, description, context)) {
+                    if (note == null) {
+                        val noteItem = Note(
+                            title = title,
+                            description = description,
+                            timeStamp = Timestamp.now()
+                        )
+                        noteViewModel.addNote(noteItem)
+                    } else {
+                        val noteItem = Note(
+                            id = note.id,
+                            title = title,
+                            description = description,
+                            timeStamp = Timestamp.now()
+                        )
+                        noteViewModel.updateNote(noteItem)
+                    }
                 }
             }
         }
@@ -180,12 +183,42 @@ fun AddNoteScreen(
     }
 }
 
+fun validate(title: String, description: String, context: Context): Boolean {
+    if (title.isEmpty()) {
+        Toast.makeText(
+            context,
+            "Title should not empty",
+            Toast.LENGTH_SHORT
+        ).show()
+        return false
+    } else if (description.isEmpty()) {
+        Toast.makeText(
+            context,
+            "Description should not empty",
+            Toast.LENGTH_SHORT
+        ).show()
+        return false
+    } else {
+        return true
+    }
+}
+
 @Composable
-fun TopBar(onClickAdd: () -> Unit) {
+fun TopBar(note: Note?, navController: NavHostController, onClickAdd: () -> Unit) {
     TopAppBar(
+        navigationIcon = {
+            IconButton(onClick = {
+                navController.popBackStack()
+            }) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = null
+                )
+            }
+        },
         title = {
             Text(
-                text = "Add New Note",
+                text = if (note == null) "Add New Note" else "Edit Note",
                 fontSize = 20.sp,
                 fontFamily = FontFamily(Font(R.font.poppins_semi_bold)),
                 color = Color.Black
